@@ -1,5 +1,5 @@
 ﻿using System;
-using static ActorsDemoWeb.Actors.Actors.Payments.PaymentActor;
+using static ActorsDemoWeb.Actors.Actors.Payments.PaymentState;
 
 namespace ActorsDemoWeb.Actors.Actors.Payments
 {

@@ -4,7 +4,7 @@ using System;
 
 namespace ActorsDemoWeb.Actors.Actors.Payments
 {
-    public class PaymentActor : ReceivePersistentActor
+    public partial class PaymentActor : ReceivePersistentActor
     {
         public int Id { get; private set; }
         public override string PersistenceId => $"Pmt-{Id}";
@@ -20,9 +20,9 @@ namespace ActorsDemoWeb.Actors.Actors.Payments
             Command<ConfirmPaymentCommand>(command => HandleConfirmPaymentCommand(command));
             Command<CancelPaymentCommand>(command => HandleCancelPaymentCommand(command));
 
-            Recover<PaymentCreatedEvent>(@event => HandleEvent(@event));
-            Recover<PaymentConfirmedEvent>(@event => HandleEvent(@event));
-            Recover<PaymentCanceledEvent>(@event => HandleEvent(@event));
+            Recover<PaymentCreatedEvent>(@event => State.HandleEvent(@event));
+            Recover<PaymentConfirmedEvent>(@event => State.HandleEvent(@event));
+            Recover<PaymentCanceledEvent>(@event => State.HandleEvent(@event));
 
             Command<string>(command => HandleStringCommand(command));
 
@@ -55,7 +55,7 @@ namespace ActorsDemoWeb.Actors.Actors.Payments
             var @event = new PaymentCreatedEvent(command.Amount);
             Persist(@event, persistedEvent =>
             {
-                HandleEvent(persistedEvent);
+                State.HandleEvent(persistedEvent);
             });
         }
 
@@ -64,7 +64,7 @@ namespace ActorsDemoWeb.Actors.Actors.Payments
             var @event = new PaymentConfirmedEvent(DateTime.Now);
             Persist(@event, persistedEvent =>
             {
-                HandleEvent(persistedEvent);
+                State.HandleEvent(persistedEvent);
             });
         }
 
@@ -73,84 +73,9 @@ namespace ActorsDemoWeb.Actors.Actors.Payments
             var @event = new PaymentCanceledEvent(DateTime.Now);
             Persist(@event, persistedEvent =>
             {
-                HandleEvent(persistedEvent);
+                State.HandleEvent(persistedEvent);
             });
         }
-
-        private void HandleEvent(PaymentCreatedEvent @event)
-        {
-            State.Amount = @event.Amount;
-            State.CreatedOn = @event.CreatedOn;
-            State.Status = @event.Status;
-        }
-
-        private void HandleEvent(PaymentConfirmedEvent @event)
-        {
-            State.FinalizedOn = @event.ConfirmedOn;
-            State.Status = @event.Status;
-        }
-
-        private void HandleEvent(PaymentCanceledEvent @event)
-        {
-            State.FinalizedOn = @event.CanceledOn;
-            State.Status = @event.Status;
-        }
-
-
-        public class PaymentCreatedEvent
-        {
-            public int Amount { get; private set; }
-            public DateTime CreatedOn { get; private set; }
-            public PaymentStatus Status { get; private set; }
-
-            public PaymentCreatedEvent(int amount)
-            {
-                Amount = amount;
-                CreatedOn = DateTime.Now;
-                Status = PaymentStatus.Pending;
-            }
-        }
-
-        public class PaymentConfirmedEvent
-        {
-            public DateTime ConfirmedOn { get; private set; }
-            public PaymentStatus Status { get; private set; }
-
-            public PaymentConfirmedEvent(DateTime confirmedOn)
-            {
-                ConfirmedOn = confirmedOn;
-                Status = PaymentStatus.Confirmed;
-            }
-        }
         
-        public class PaymentCanceledEvent
-        {
-            public DateTime CanceledOn { get; private set; }
-            public PaymentStatus Status { get; private set; }
-
-            public PaymentCanceledEvent(DateTime canceledOn)
-            {
-                CanceledOn = canceledOn;
-                Status = PaymentStatus.Canceled;
-            }
-        }
-
-
-        public class PaymentState
-        {
-            public DateTime CreatedOn { get; set; }
-            public DateTime FinalizedOn { get; set; }
-            public int Amount { get; set; }            
-            public PaymentStatus Status { get; set; }
-        }
-
-
-        public enum PaymentStatus
-        {
-            Pending,
-            Confirmed,
-            Canceled
-        }
-
     }
 }
